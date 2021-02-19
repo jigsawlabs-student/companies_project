@@ -44,11 +44,6 @@ class Company:
         cursor.execute(sql_query, (self.sub_industry_id,))
         return db.build_from_record(models.SubIndustry, cursor.fetchone())
 
-    def quarterly_prices_pe(self, cursor):
-        sql_query = f"SELECT * FROM prices_pe WHERE prices_pe.company_id = %s;"
-        cursor.execute(sql_query, (self.id,))
-        record = cursor.fetchall()
-        return db.build_from_records(models.PricePE, record)
 
     def quarterly_reports(self, cursor):
         sql_query = f"""SELECT * FROM quarterly_reports
@@ -56,6 +51,12 @@ class Company:
         cursor.execute(sql_query, (self.id,))
         records = cursor.fetchall()
         return db.build_from_records(models.QuarterlyReport, records) 
+
+    def quarterly_prices_pe(self, cursor):
+        sql_query = f"SELECT * FROM prices_pe WHERE prices_pe.company_id = %s;"
+        cursor.execute(sql_query, (self.id,))
+        record = cursor.fetchall()
+        return db.build_from_records(models.PricePE, record)
     
     def to_quarterly_financials_json(self, cursor):
         quarterly_reports_prices_pe_json = self.__dict__
@@ -68,18 +69,9 @@ class Company:
                                                     price_pe_obj.__dict__ for price_pe_obj in prices_pe_obj]
         return quarterly_reports_prices_pe_json
 
-    def group_average(self, list_of_companies_financials):
-        """
-        returns the average value of various financials of a group of companies, including:
-        revenue, cost, earnings; stock price, price/earnings ratio
-        """
-        dates_vector = [company['Quarterly financials']['date'] 
-                    for company in list_of_companies_financials][0]
-        revenues_list = [company['Quarterly financials']['revenue'] for company in list_of_companies_financials]
-        revenues_sum_list = list(map(sum, zip(*revenues_list)))
-        print(revenues_sum_list)
-        breakpoint()
 
+
+    # JK: Currently doesn't look like this function is being used 
     @classmethod
     def group_avg_financials_history(self, companies_fiancials_list, cursor):
         """

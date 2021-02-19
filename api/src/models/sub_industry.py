@@ -23,14 +23,8 @@ class SubIndustry:
         record = cursor.fetchone()
         return db.build_from_record(SubIndustry, record)
 
-    @classmethod
-    def find_by_sector(self, sector_name, cursor):
-        sql_str = f"""SELECT * FROM {self.__table__} 
-                    WHERE sector_GICS = %s;"""
-        cursor.execute(sql_str, (sector_name,))
-        record = cursor.fetchone()
-        return record
-
+    # JK: Why isn't this a classmethod?  I moved it near the find_by_sub_industry_name 
+    # as it's similar to that function.  
     #@classmethod
     def find_companies_by_sub_industry(self, sub_industry_id, cursor):
         """
@@ -51,7 +45,18 @@ class SubIndustry:
         records = cursor.fetchall() 
         return db.build_from_records(models.Company, records)
 
+    @classmethod
+    def find_by_sector(self, sector_name, cursor):
+        sql_str = f"""SELECT * FROM {self.__table__} 
+                    WHERE sector_GICS = %s;"""
+        cursor.execute(sql_str, (sector_name,))
+        record = cursor.fetchone()
+        return record
+
+    # this funtion is way too long (we prefer five lines, as opposed to 40 :) )
+    # much of it looks like it could be moved to SQL, but I'm not sure what the output is supposed to be.  We should discuss.
     def group_average(self, list_of_companies_financials):
+
         def reduced_4_quarter_dicts_list(financials_of_interest:list, list_of_companies_financials):
             reduced_dict_list = reduce(lambda x, y: [{f'{key}': 
                                                                 (x[x.index(quarterly_fin_dict)][key] 
@@ -120,6 +125,8 @@ class SubIndustry:
 
         return final_dict  
 
+
+    # 
     def average_financials_by_sub_industry(self, cursor):
         sql_str= f"""SELECT companies.* FROM companies
                      JOIN sub_industries
@@ -131,6 +138,20 @@ class SubIndustry:
         companies_objs_list = db.build_from_records(models.Company, records)
         list_of_companies_financials = [obj.to_quarterly_financials_json(cursor) 
                                                                 for obj in companies_objs_list]
-        final_dict = self.group_average(list_of_companies_financials)
+        final_dict = group_average(list_of_companies_financials)
+        # seems like we can perform this in SQL.
         return final_dict
     
+    # moved this function from the company class, as this is the only placce it's used.
+
+    def group_average(self, list_of_companies_financials):
+        """
+        returns the average value of various financials of a group of companies, including:
+        revenue, cost, earnings; stock price, price/earnings ratio
+        """
+        dates_vector = [company['Quarterly financials']['date'] 
+                    for company in list_of_companies_financials][0]
+        revenues_list = [company['Quarterly financials']['revenue'] for company in list_of_companies_financials]
+        revenues_sum_list = list(map(sum, zip(*revenues_list)))
+        print(revenues_sum_list)
+        breakpoint()

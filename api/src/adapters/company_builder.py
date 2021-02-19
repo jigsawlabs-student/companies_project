@@ -8,12 +8,19 @@ import datetime
 class CompanyBuilder:
     attributes = ['name', 'ticker', 'sub_industry_id', 'year_founded', 'number_of_employees', 'HQ_state', 'country']
     
+    # break this into multiple functions
     def run(self, company_info_sp500, sub_industry_name, conn, cursor):
+        # select_attributes
         year_founded = company_info_sp500['Founded']
         sub_industry_name = company_info_sp500['GICS Sub-Industry']
         ticker = company_info_sp500['Symbol']
+
+        # this may need to be a find or create
         sub_industry_obj = models.SubIndustry.find_by_sub_industry_name(sub_industry_name, cursor)
         sub_industry_id = sub_industry_obj.__dict__['id']
+
+        # this retrieval should be separate function 
+        # really could via_intrinio should be a separate ETL structure of client, extract, and load?
         company_info_dict = via_intrinio_api(ticker)
         if type(company_info_dict) == tuple:
             return f"{ticker} info not available from Intrinio API."
@@ -23,6 +30,9 @@ class CompanyBuilder:
         country = company_info_dict['country']
 
         values = [name, ticker, sub_industry_id, year_founded, number_of_employees, HQ_state, country]
+
+
+
         company_dict = dict(zip(self.attributes, values))
         company_obj = models.Company(**company_dict)
         company_obj = db.save(company_obj, conn, cursor)

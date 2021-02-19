@@ -7,6 +7,7 @@ class RequestAndBuildSubIndustries:
     def __init__(self):
         self.client = adapters.SubIndustryClient() # from client.py
         self.sub_industry_builder = adapters.SubIndustryBuilder() # from sub_industries_builder.py
+        # JK: db names should be referenced from settings
         self.conn = psycopg2.connect(database = 'investment_analysis', 
                                         user = 'postgres', 
                                         password = 'postgres')
@@ -28,6 +29,8 @@ class RequestAndBuildCompanies:
     def __init__(self):
         self.client = adapters.CompanyClient()
         self.company_builder = adapters.CompanyBuilder()
+        # reference db names/users/pword from settings...perhaps have a single connection defined in db file.
+
         self.conn = psycopg2.connect(database = 'investment_analysis', 
                                         user = 'postgres', 
                                         password = 'postgres')
@@ -39,6 +42,7 @@ class RequestAndBuildCompanies:
         company_objs = []
         for company_info_sp500 in companies_in_sub_industry:
             company_obj = self.company_builder.run(company_info_sp500, sub_industry_name, self.conn, self.cursor)
+            # unclear why skip if company_obj is string...does this mean it doesn't exist?
             if type(company_obj) == str:
                 print(company_obj)
                 continue
